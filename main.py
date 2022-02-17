@@ -163,7 +163,8 @@ def Main():
     chrome_opt = Options()
     chrome_opt.add_argument('log-level=2')
     chrome_opt.add_argument('--window-size=1920,1080')
-    chrome_opt.add_argument('--headless')
+    chrome_opt.add_argument('log-level=2')
+    # chrome_opt.add_argument('--headless')
     chrome_opt.add_experimental_option('excludeSwitches', ['enable-logging'])
 
 
@@ -324,8 +325,9 @@ def Main():
 
                         low, high = min(manga_status[types_en[dl_type]]['range']), max(manga_status[types_en[dl_type]]['range'])
                         # idx_input_legal = True   # 序号输入合法性判断
-                        dl_range = [] # 下载范围(上下限, 考虑到有.5的存在) 
+                        
                         while True:
+                            dl_range = [] # 下载范围(上下限, 考虑到有.5的存在) 
                             cmd = input(f'''请选择要下载的【{types[dl_type]}】的序号, 也可输入下载的序号范围, 用'-'隔开,例如1-5. 按回车【Enter】结束输入(输入'x'返回上一层下载类型选择):\n''')
                             
                             
@@ -441,10 +443,9 @@ def Main():
                     jumpBack(browser)
                     break
         except Exception as e:
-            msg.fail('程序遇到了错误, 按回车【Enter】返回搜索页')
+            msg.fail('程序遇到了错误, 程序即将退出')
             log(colorStr(str(e), fg='red'))
-            input()
-            continue
+            exit(0)
 
                 
 if __name__ == '__main__':
