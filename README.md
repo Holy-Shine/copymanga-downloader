@@ -55,3 +55,7 @@ http://chromedriver.storage.googleapis.com/index.html
 
 
 ## <span id="head6">step 5. 双击main.exe使用(允许程序使用网络)</span>
+考虑到信息展示问题，推荐使用**windows powershell**在`main.exe`目录下打开，然后执行
+```
+.\main.exe
+```
