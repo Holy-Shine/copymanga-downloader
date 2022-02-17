@@ -21,7 +21,7 @@ https://www.google.cn/intl/zh-CN/chrome/
 
 根据你的chrome浏览器版本（在下图位置找到）：
 
-<img src="D:/Workspace/Gitrepo/GitToc/img/1.png">
+<img src="https://github.com/Holy-Shine/copymanga-downloader/blob/main/img/1.png">
 
 去下面的网站下载驱动程序：
 
@@ -31,7 +31,7 @@ http://chromedriver.storage.googleapis.com/index.html
 >
 > 选择后缀名为`win32`的压缩包下载，里面是一个名为**chromedriver.exe**的可执行驱动文件
 
-<img src="D:/Workspace/Gitrepo/GitToc/img/2.png">
+<img src="https://github.com/Holy-Shine/copymanga-downloader/blob/main/img/2.png">
 
 ## <span id="head4">step3. 解压chromedriver.exe驱动文件到特定目录</span>
 
@@ -43,7 +43,7 @@ http://chromedriver.storage.googleapis.com/index.html
 
 ## <span id="head5">step4. 将驱动文件目录放到用户/系统环境变量下</span>
 
-<img src="D:/Workspace/Gitrepo/GitToc/img/3.png">
+<img src="https://github.com/Holy-Shine/copymanga-downloader/blob/main/img/3.png">
 
 1. 搜索or控制面板找到环境变量
 2. 点击【环境变量】
