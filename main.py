@@ -314,7 +314,7 @@ def Main():
                                 time.sleep(3)
                                 continue
                             else:
-                                exit(0)
+                                os.exit(0)
 
 
 
@@ -466,7 +466,7 @@ def Main():
                             elif opt=='2':
                                 break
                             else:
-                                exit(0)
+                                os.exit(0)
 
                     jumpBack(browser)
 
@@ -492,7 +492,7 @@ def Main():
         except Exception as e:
             msg.fail('程序遇到了错误, 程序即将退出')
             log(colorStr(str(e), fg='red'))
-            exit(0)
+            os.exit(0)
 
                 
 if __name__ == '__main__':
