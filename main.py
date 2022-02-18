@@ -27,6 +27,8 @@ import wasabi
 from wasabi import msg
 from alive_progress import alive_bar
 
+from retrying import retry
+
 msg.show_color=True
 urllib3.disable_warnings()
 def waitElementOccur(browser, XPATH, sec=10):
@@ -77,9 +79,10 @@ def mangaIdxParser(term):
     return None
 
     
-def scrollBottomToTop(browser):
+def scrollBottomToTop(browser, target_xpath):
     '''缓慢从页面底部滑动到页面顶部
 
+    target_xpath: 目标元素,出现则跳出
     100/0.1s
     '''
     step=100
@@ -94,6 +97,14 @@ def scrollBottomToTop(browser):
         browser.execute_script(f"window.scrollTo(0, {page_height-step});")
         page_height-=step
         time.sleep(t)
+
+        # 检查目标元素是否出现, 出现则立即跳出
+        try:
+            browser.find_element(By.XPATH, target_xpath)
+            break
+        except Exception:
+            continue
+
     
 
 
@@ -158,13 +169,26 @@ def log(s, rank=None):
         s = colorStr(s, fg='yellow')
     print(s)
 
+
+@retry(stop_max_attempt_number=10)
+def downloadImg(img_src, path):
+    try:
+        image=requests.get(img_src, verify = False)
+        with open(path,'wb') as wf:
+            wf.write(image.content)
+        time.sleep(5)
+    except Exception as e:
+        time.sleep(3)
+        raise e
+
+
 def Main():
     msg.info('程序初始化中,请稍后...')
     chrome_opt = Options()
     chrome_opt.add_argument('log-level=2')
     chrome_opt.add_argument('--window-size=1920,1080')
     chrome_opt.add_argument('log-level=2')
-    # chrome_opt.add_argument('--headless')
+    chrome_opt.add_argument('--headless')
     chrome_opt.add_experimental_option('excludeSwitches', ['enable-logging'])
 
 
@@ -262,17 +286,37 @@ def Main():
                     # 切换到当前窗口
                     browser.switch_to.window(browser.window_handles[-1])
                     #等待所有可下载选项加载完毕
-                    time.sleep(3)
 
 
                     # 检查 话/卷/番外是否可用
-                    hua_xpath = '/html/body/main/div[2]/div[3]/div[1]/div[1]/ul/li[2]/a'
-                    juan_xpath = '/html/body/main/div[2]/div[3]/div[1]/div[1]/ul/li[3]/a'
-                    fanwai_xpath = '/html/body/main/div[2]/div[3]/div[1]/div[1]/ul/li[4]/a'
+                    n_try = 0
+                    while True:
+                        try:
+                            hua_xpath = '/html/body/main/div[2]/div[3]/div[1]/div[1]/ul/li[2]/a'
+                            juan_xpath = '/html/body/main/div[2]/div[3]/div[1]/div[1]/ul/li[3]/a'
+                            fanwai_xpath = '/html/body/main/div[2]/div[3]/div[1]/div[1]/ul/li[4]/a'
 
-                    hua_flag    = False if 'disabled' in browser.find_element_by_xpath(hua_xpath).get_attribute('class') else True
-                    juan_flag   = False if 'disabled' in browser.find_element_by_xpath(juan_xpath).get_attribute('class') else True
-                    fanwai_flag = False if 'disabled' in browser.find_element_by_xpath(fanwai_xpath).get_attribute('class') else True
+                            hua_flag    = False if 'disabled' in browser.find_element_by_xpath(hua_xpath).get_attribute('class') else True
+                            juan_flag   = False if 'disabled' in browser.find_element_by_xpath(juan_xpath).get_attribute('class') else True
+                            fanwai_flag = False if 'disabled' in browser.find_element_by_xpath(fanwai_xpath).get_attribute('class') else True
+                    
+                            break
+                        except Exception:
+                            if (n_try+1) % 3==0:
+                                msg.warn('加载漫画信息失败!你已尝试多次重新加载,是否继续重新加载?(输入y表示继续,其他任何输入都表示退出程序)')
+                            else:
+                                msg.warn('加载漫画信息失败!是否重新加载?(输入y表示继续,其他任何输入都表示退出程序)')
+                            opt = input()
+                            n_try+=1
+                            if opt=='y':
+                                msg.info('正在获取漫画信息,请稍后...')
+                                browser.refresh()
+                                time.sleep(3)
+                                continue
+                            else:
+                                exit(0)
+
+
 
 
                     # 分析当前话/卷/番外的状态(多少卷)
@@ -366,9 +410,7 @@ def Main():
 
                                     # 共 n_jpg 张图片
                                     n_jpg = int(waitElementOccur(browser,'/html/body/div[1]/span[2]').text)
-                                    
-                                    scroll_step=1000  # 每次滑动1000
-                                    scroll_status = 0
+
                                     flag=True
                                     
                                     with alive_bar(n_jpg) as bar:
@@ -382,14 +424,11 @@ def Main():
                                                     flag=False
                                                     break
                                                 try:
-                                                    ele_jpg = browser.find_element_by_xpath(f'/html/body/div[2]/div/ul/li[{ct+1}]')
-                                                    
-                                                    
-                                                    scroll_status+=scroll_step 
-
+                                                    target_xpath = f'/html/body/div[2]/div/ul/li[{ct+1}]'
+                                                    ele_jpg = browser.find_element_by_xpath(target_xpath)
                                                     break
                                                 except Exception:
-                                                    scrollBottomToTop(browser)
+                                                    scrollBottomToTop(browser, target_xpath)
                                                     n_try+=1
                                                     continue
                                                 
@@ -398,10 +437,18 @@ def Main():
                                             
                                             img_ele = ele_jpg.find_element_by_xpath('img')
                                             data_src = img_ele.get_attribute('data-src')
-                                            image=requests.get(data_src, verify = False)
-                                            with open(manga_dir+'/{0:0>3}.jpg'.format(ct+1),'wb') as wf:
-                                                wf.write(image.content)
-                                            time.sleep(5)
+
+                                            # 下载图片
+                                            try:
+                                                downloadImg(
+                                                    img_src=data_src,
+                                                    path=manga_dir+'/{0:0>3}.jpg'.format(ct+1)
+                                                )
+
+                                            except Exception:
+                                                flag=False
+                                                break
+                                            
                                     if flag == False:
                                         msg.fail('下载失败...')
 
