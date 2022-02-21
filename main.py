@@ -22,6 +22,7 @@ from prettytable import PrettyTable
 import os,re
 import time
 import requests
+from sympy import EX
 import urllib3
 import wasabi
 from wasabi import msg
@@ -111,7 +112,7 @@ def getMangaStatus(browser, key_word='話'):
     '''
     status = {}
     xpath_base = f'//*[@id="default{key_word}"]/ul'
-    ele_item_box = browser.find_element_by_xpath(xpath_base)
+    ele_item_box = browser.find_element(By.XPATH, xpath_base)
     ele_item_list = ele_item_box.find_elements_by_xpath('a')
     links = []   # 卷/话链接
     ranges = []  # 卷/话范围
@@ -223,7 +224,10 @@ def Main():
                 input()
                 jumpBack(browser)
                 continue
-            page_total = int(page_total_ele.text[1:])
+            if not page_total_ele.text.isdigit():
+                page_total = 1
+            else:
+                page_total = int(page_total_ele.text[1:])
             page_cur = 1
             
             # 进入检索状态
@@ -269,11 +273,21 @@ def Main():
                     hua_xpath = '/html/body/main/div[2]/div[3]/div[1]/div[1]/ul/li[2]/a'
                     juan_xpath = '/html/body/main/div[2]/div[3]/div[1]/div[1]/ul/li[3]/a'
                     fanwai_xpath = '/html/body/main/div[2]/div[3]/div[1]/div[1]/ul/li[4]/a'
-
-                    hua_flag    = False if 'disabled' in browser.find_element_by_xpath(hua_xpath).get_attribute('class') else True
-                    juan_flag   = False if 'disabled' in browser.find_element_by_xpath(juan_xpath).get_attribute('class') else True
-                    fanwai_flag = False if 'disabled' in browser.find_element_by_xpath(fanwai_xpath).get_attribute('class') else True
-
+                    
+                    n_try = 0
+                    while True:
+                        if n_try>50:
+                            raise Exception
+                        try:
+                            hua_flag    = False if 'disabled' in browser.find_element(By.XPATH, hua_xpath).get_attribute('class') else True
+                            juan_flag   = False if 'disabled' in browser.find_element(By.XPATH, juan_xpath).get_attribute('class') else True
+                            fanwai_flag = False if 'disabled' in browser.find_element(By.XPATH, fanwai_xpath).get_attribute('class') else True
+                            break
+                        except Exception:
+                            n_try+=1
+                            browser.refresh()
+                            continue
+                        
 
                     # 分析当前话/卷/番外的状态(多少卷)
                     manga_status = {}
@@ -382,7 +396,7 @@ def Main():
                                                     flag=False
                                                     break
                                                 try:
-                                                    ele_jpg = browser.find_element_by_xpath(f'/html/body/div[2]/div/ul/li[{ct+1}]')
+                                                    ele_jpg = browser.find_element(By.XPATH, f'/html/body/div[2]/div/ul/li[{ct+1}]')
                                                     
                                                     
                                                     scroll_status+=scroll_step 
@@ -396,7 +410,7 @@ def Main():
                                             if flag==False:
                                                 break
                                             
-                                            img_ele = ele_jpg.find_element_by_xpath('img')
+                                            img_ele = ele_jpg.find_element(By.XPATH, 'img')
                                             data_src = img_ele.get_attribute('data-src')
                                             image=requests.get(data_src, verify = False)
                                             with open(manga_dir+'/{0:0>3}.jpg'.format(ct+1),'wb') as wf:
@@ -424,6 +438,9 @@ def Main():
                     jumpBack(browser)
 
                 elif option == '2':
+                    if page_total == 1:
+                        msg.info('当前漫画搜索结果仅有1页,无法跳转!')
+                        continue
                     '跳页'
                     while True:
                         n_page = input(f'''请输入要跳转的页码, 范围为1~{page_total}(当前是第{page_cur}页),按回车【Enter】结束输入:''')
