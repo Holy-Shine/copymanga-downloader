@@ -59,3 +59,6 @@ http://chromedriver.storage.googleapis.com/index.html
 ```
 .\main.exe
 ```
+
+## 备注
+1. 如果下载遇到错误，请尝试关闭电脑的代理工具，再重新打开软件

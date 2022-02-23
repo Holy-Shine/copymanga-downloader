@@ -22,7 +22,6 @@ from prettytable import PrettyTable
 import os,re
 import time
 import requests
-from sympy import EX
 import urllib3
 import wasabi
 from wasabi import msg
@@ -165,7 +164,7 @@ def Main():
     chrome_opt.add_argument('log-level=2')
     chrome_opt.add_argument('--window-size=1920,1080')
     chrome_opt.add_argument('log-level=2')
-    # chrome_opt.add_argument('--headless')
+    chrome_opt.add_argument('--headless')
     chrome_opt.add_experimental_option('excludeSwitches', ['enable-logging'])
 
 

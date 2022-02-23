@@ -4,4 +4,3 @@ alive_progress==1.6.2
 requests==2.26.0
 pyinstaller
 wasabi
-retrying
